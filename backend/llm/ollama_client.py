@@ -1,19 +1,35 @@
 from langchain_ollama import ChatOllama
+from backend.core.config import config
 from backend.core.logger import get_logger
+
 
 logger = get_logger(__name__)
 
 
 class OllamaClient:
 
-    def __init__(self, model: str = "llama3.2:3b", temperature: float = 0.3):
+    def __init__(self):
+        self.model = config.ollama_model
 
-        logger.info(f"Initializing Ollama model: {model}")
+        self.client = ChatOllama(model=self.model, temperature=0.2)
 
-        self.llm = ChatOllama(
-            model=model,
-            temperature=temperature,
-        )
+    def chat(self, message: str, history: list | None = None):
+        if history is None:
+            history = []
 
-    def get_llm(self):
-        return self.llm
+        messages = []
+
+        # load history
+        for h in history:
+            messages.append({"role": h["role"], "content": h["content"]})
+
+        # add current message
+        messages.append({"role": "user", "content": message})
+
+        try:
+            response = self.client.invoke(messages)
+            return response.content
+
+        except Exception as e:
+            logger.error(f"Ollama error: {e}")
+            return "Sorry, I encountered an error."

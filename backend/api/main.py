@@ -1,26 +1,19 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI
 from pydantic import BaseModel
 
-import shutil
-from pathlib import Path
-
-from backend.core.logger import get_logger
 from backend.llm.ollama_client import OllamaClient
-from backend.rag.retriever import retrieve_documents, build_context
-from backend.rag.ingest import run_ingestion
+from backend.memory.postgres_memory import PostgresMemory
 
-logger = get_logger(__name__)
 
 app = FastAPI()
 
-llm_client = OllamaClient()
-UPLOAD_DIR = "data/uploads"
-CURRENT_COLLECTION = "default"
+llm = OllamaClient()
+memory = PostgresMemory()
 
 
 class ChatRequest(BaseModel):
+    session_id: str
     message: str
-    model: str = "llama3.2:3b"
 
 
 class ChatResponse(BaseModel):
@@ -29,49 +22,25 @@ class ChatResponse(BaseModel):
 
 @app.get("/")
 def root():
-    return {"status": "EchoMind API running"}
-
-
-@app.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
-    global CURRENT_COLLECTION
-    Path(UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
-    file_path = Path(UPLOAD_DIR) / file.filename
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    collection_name = Path(file.filename).stem
-    logger.info(f"Uploaded file: {file.filename}")
-    run_ingestion(collection_name=collection_name)
-    CURRENT_COLLECTION = collection_name
-    logger.info(f"Active collection set to: {CURRENT_COLLECTION}")
-
-    return {
-        "status": "success",
-        "file": file.filename,
-        "collection": collection_name,
-    }
+    return {"status": "EchoMind running"}
 
 
 @app.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest):
-    user_message = request.message
-    logger.info(f"User message: {user_message}")
-    docs = retrieve_documents(user_message, collection_name=CURRENT_COLLECTION)
-    context = build_context(docs)
+def chat(req: ChatRequest):
 
-    prompt = f"""
-    Use the following context to answer the question.
+    session_id = req.session_id
+    user_message = req.message
 
-    Context:
-    {context}
+    # Save user message
+    memory.save_message(session_id, "user", user_message)
 
-    Question:
-    {user_message}
-    """
+    # Load conversation history
+    history = memory.load_history(session_id)
 
-    llm = llm_client.get_llm()
-    response = llm.invoke(prompt)
-    answer = response.content
-    logger.info("Answer generated")
-    return ChatResponse(response=answer)
+    # Generate response
+    response = llm.chat(user_message, history)
+
+    # Save assistant response
+    memory.save_message(session_id, "assistant", response)
+
+    return ChatResponse(response=response)

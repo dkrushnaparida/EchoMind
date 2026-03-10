@@ -2,17 +2,30 @@ from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
 
 from backend.core.config import settings
+from backend.core.logger import get_logger
+from backend.rag.query_rewriter import QueryRewriter
+
+logger = get_logger(__name__)
 
 
-embeddings = OllamaEmbeddings(model="nomic-embed-text:latest")
+class RAGRetriever:
+    def __init__(self):
 
-vectordb = Chroma(
-    persist_directory=settings.VECTOR_DB_DIR, embedding_function=embeddings
-)
+        self.embeddings = OllamaEmbeddings(model="nomic-embed-text:latest")
 
+        self.vectorstore = Chroma(
+            persist_directory="data/vectordb", embedding_function=self.embeddings
+        )
 
-def get_relevant_documents(query: str, k: int = 4):
-    retriever = vectordb.as_retriever(search_kwargs={"k": k})
-    docs = retriever.invoke(query)
+        self.rewriter = QueryRewriter()
 
-    return docs
+        self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 5})
+
+    def retrieve(self, query: str):
+        rewritten_query = self.rewriter.rewrite(query)
+        logger.info(f"Original Query: {query}")
+        logger.info(f"Rewritten Query: {rewritten_query}")
+
+        docs = self.retriever.invoke(rewritten_query)
+
+        return docs

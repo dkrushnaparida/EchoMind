@@ -1,11 +1,10 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from backend.rag.retriever import ask_question
+from backend.core.logger import get_logger
 
-from backend.llm.ollama_client import OllamaClient
-
-
+logger = get_logger(__name__)
 app = FastAPI()
-llm = OllamaClient()
 
 
 class ChatRequest(BaseModel):
@@ -23,6 +22,6 @@ def root():
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):
-    answer = llm.chat(request.message)
-
+    logger.info(f"User message: {request.message}")
+    answer = ask_question(request.message)
     return ChatResponse(response=answer)

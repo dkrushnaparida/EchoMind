@@ -2,26 +2,20 @@ import json
 from pathlib import Path
 
 
-class Config:
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+CONFIG_PATH = BASE_DIR / "configs" / "settings.json"
+
+
+class Settings:
+
     def __init__(self):
-        config_path = Path("configs/settings.json")
-        with open(config_path, "r") as f:
-            self.settings = json.load(f)
 
-    @property
-    def ollama_model(self):
-        return self.settings.get("ollama_model", "llama3.2:3b")
+        with open(CONFIG_PATH, "r") as f:
+            config = json.load(f)
 
-    @property
-    def embed_model(self):
-        return self.settings.get("embed_model", "nomic-embed-text:latest")
-
-    @property
-    def postgres_url(self):
-        return self.settings.get(
-            "postgres_url",
-            "postgresql://postgres:postgres@localhost:5432/echomind"
-        )
+        self.VECTOR_DB_DIR = config["vector_db_dir"]
+        self.UPLOAD_DIR = config["upload_dir"]
 
 
-config = Config()
+settings = Settings()

@@ -7,6 +7,7 @@ from langchain_community.document_loaders import (
     TextLoader,
     Docx2txtLoader,
 )
+from backend.core.config import settings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from backend.core.logger import get_logger
 

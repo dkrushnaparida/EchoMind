@@ -1,5 +1,7 @@
 {
   "ollama_model": "llama3.2:3b",
   "embed_model": "nomic-embed-text:latest",
-  "postgres_url": "postgresql://postgres:postgres@localhost:5432/echomind"
+  "postgres_url": "postgresql://postgres:password@localhost:5432/echomind",
+  "vector_db_dir": "data/vectordb",
+  "upload_dir": "data/uploads"
 }

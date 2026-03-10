@@ -1,47 +1,66 @@
-import psycopg
-from backend.core.config import config
-from backend.core.logger import get_logger
-
-logger = get_logger(__name__)
+import psycopg2
+from datetime import datetime
 
 
-class PostgresMemory:
+DB_CONFIG = {
+    "dbname": "echomind",
+    "user": "postgres",
+    "password": "Password",
+    "host": "localhost",
+    "port": "5432",
+}
 
-    def __init__(self):
-        self.conn = psycopg.connect(config.postgres_url)
 
-    def save_message(self, session_id: str, role: str, message: str):
-        try:
-            with self.conn.cursor() as cur:
-                cur.execute(
-                    """
-                    INSERT INTO chat_history (session_id, role, message)
-                    VALUES (%s, %s, %s)
-                    """,
-                    (session_id, role, message),
-                )
-                self.conn.commit()
-        except Exception as e:
-            logger.error(f"Memory save failed: {e}")
+def get_connection():
+    return psycopg2.connect(**DB_CONFIG)
 
-    def load_history(self, session_id: str):
-        try:
-            with self.conn.cursor() as cur:
-                cur.execute(
-                    """
-                    SELECT role, message
-                    FROM chat_history
-                    WHERE session_id = %s
-                    ORDER BY created_at ASC
-                    """,
-                    (session_id,),
-                )
 
-                rows = cur.fetchall()
-                history = [{"role": role, "content": message} for role, message in rows]
+def save_message(user_id: str, role: str, content: str):
+    """
+    Save a message to PostgreSQL
+    """
 
-                return history
+    conn = get_connection()
+    cursor = conn.cursor()
 
-        except Exception as e:
-            logger.error(f"Memory load failed: {e}")
-            return []
+    query = """
+    INSERT INTO conversation_memory (user_id, role, content, created_at)
+    VALUES (%s, %s, %s, %s)
+    """
+
+    cursor.execute(query, (user_id, role, content, datetime.utcnow()))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+def get_recent_messages(user_id: str, limit: int = 5):
+    """
+    Retrieve recent conversation messages
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = """
+    SELECT role, content
+    FROM conversation_memory
+    WHERE user_id = %s
+    ORDER BY created_at DESC
+    LIMIT %s
+    """
+
+    cursor.execute(query, (user_id, limit))
+
+    rows = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    messages = []
+
+    for role, content in rows:
+        messages.append({"role": role, "content": content})
+
+    return messages[::-1]

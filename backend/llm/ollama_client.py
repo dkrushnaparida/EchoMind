@@ -1,35 +1,34 @@
 from langchain_ollama import ChatOllama
-from backend.core.config import config
-from backend.core.logger import get_logger
-
-
-logger = get_logger(__name__)
+from langchain_core.prompts import ChatPromptTemplate
 
 
 class OllamaClient:
-
     def __init__(self):
-        self.model = config.ollama_model
+        self.llm = ChatOllama(model="llama3.2:3b", temperature=0.2)
+        self.prompt = ChatPromptTemplate.from_template(
+            """
+            You are EchoMind, an AI assistant.
+            Use the following information to answer.
 
-        self.client = ChatOllama(model=self.model, temperature=0.2)
+            Conversation History:
+            {memory}
 
-    def chat(self, message: str, history: list | None = None):
-        if history is None:
-            history = []
+            Relevant Documents:
+            {documents}
 
-        messages = []
+            User Question:
+            {question}
 
-        # load history
-        for h in history:
-            messages.append({"role": h["role"], "content": h["content"]})
+            Provide a clear and accurate answer.
+            """
+        )
 
-        # add current message
-        messages.append({"role": "user", "content": message})
+        self.chain = self.prompt | self.llm
 
-        try:
-            response = self.client.invoke(messages)
-            return response.content
+    def generate(self, question: str, memory: str, documents: str):
 
-        except Exception as e:
-            logger.error(f"Ollama error: {e}")
-            return "Sorry, I encountered an error."
+        response = self.chain.invoke(
+            {"question": question, "memory": memory, "documents": documents}
+        )
+
+        return response.content

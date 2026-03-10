@@ -59,7 +59,7 @@ def create_vector_store(chunks, collection_name="default"):
         persist_directory=VECTOR_DB_PATH,
         collection_name=collection_name,
     )
-    vectordb.persist()
+    # vectordb.persist()
     logger.info(f"DB created | collection={collection_name}")
     return vectordb
 

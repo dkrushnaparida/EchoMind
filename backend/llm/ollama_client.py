@@ -1,44 +1,19 @@
 from langchain_ollama import ChatOllama
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.output_parsers import StrOutputParser
+from backend.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class OllamaClient:
-    def __init__(
-        self,
-        model: str = "llama3.2:3b",
-        temperature: float = 0.3,
-    ):
-        self.model = model
-        self.temperature = temperature
+
+    def __init__(self, model: str = "llama3.2:3b", temperature: float = 0.3):
+
+        logger.info(f"Initializing Ollama model: {model}")
 
         self.llm = ChatOllama(
-            model=self.model,
-            temperature=self.temperature,
+            model=model,
+            temperature=temperature,
         )
 
-        self.parser = StrOutputParser()
-
-    def generate(self, prompt: str) -> str:
-        messages = [
-            SystemMessage(content="You are EchoMind, a helpful AI assistant."),
-            HumanMessage(content=prompt),
-        ]
-
-        response = self.llm.invoke(messages)
-        return self.parser.invoke(response)
-
-    def chat(self, prompt: str) -> str:
-        return self.generate(prompt)
-
-
-if __name__ == "__main__":
-
-    llm = OllamaClient()
-
-    question = "Explain what LangChain is in simple words."
-
-    response = llm.chat(question)
-
-    print("\nEchoMind Response:\n")
-    print(response)
+    def get_llm(self):
+        return self.llm

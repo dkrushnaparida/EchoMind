@@ -1,7 +1,11 @@
 {
+  "vector_db_dir": "data/vector_store",
+  "upload_dir": "data/uploads",
   "ollama_model": "llama3.2:3b",
   "embed_model": "nomic-embed-text:latest",
-  "postgres_url": "postgresql://postgres:password@localhost:5432/echomind",
-  "vector_db_dir": "data/vectordb",
-  "upload_dir": "data/uploads"
+  "db_host": "localhost",
+  "db_port": 5432,
+  "db_name": "echomind",
+  "db_user": "postgres",
+  "db_password": "Admin123"
 }

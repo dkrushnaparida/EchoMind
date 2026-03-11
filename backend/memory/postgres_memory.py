@@ -1,5 +1,6 @@
 import psycopg2
 from datetime import datetime
+from backend.core.config import settings
 
 
 DB_CONFIG = {
@@ -12,22 +13,30 @@ DB_CONFIG = {
 
 
 def get_connection():
-    return psycopg2.connect(**DB_CONFIG)
+    print("Connecting to DB:", settings.DB_NAME)
+    return psycopg2.connect(
+        host=settings.DB_HOST,
+        port=settings.DB_PORT,
+        dbname=settings.DB_NAME,
+        user=settings.DB_USER,
+        password=settings.DB_PASSWORD,
+    )
 
 
 def save_message(user_id: str, role: str, content: str):
+
     conn = get_connection()
-    cursor = conn.cursor()
+    cur = conn.cursor()
 
     query = """
-    INSERT INTO conversation_memory (user_id, role, content, created_at)
-    VALUES (%s, %s, %s, %s)
+    INSERT INTO conversations (user_id, role, content)
+    VALUES (%s, %s, %s)
     """
-
-    cursor.execute(query, (user_id, role, content, datetime.utcnow()))
-
+    cur.execute(query, (user_id, role, content))
     conn.commit()
-    cursor.close()
+    print("Saved message:", role)
+
+    cur.close()
     conn.close()
 
 

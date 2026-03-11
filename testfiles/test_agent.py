@@ -2,9 +2,6 @@ from backend.agents.agent import handle_query
 
 queries = [
     "What is Retrieval Augmented Generation?",
-    "My favorite framework is RAG",
-    "Explain my favorite framework",
-    "what time is it",
 ]
 
 user_id = "test_user"

@@ -17,5 +17,11 @@ class Settings:
         self.VECTOR_DB_DIR = config["vector_db_dir"]
         self.UPLOAD_DIR = config["upload_dir"]
 
+        self.DB_HOST = config["db_host"]
+        self.DB_PORT = config["db_port"]
+        self.DB_NAME = config["db_name"]
+        self.DB_USER = config["db_user"]
+        self.DB_PASSWORD = config["db_password"]
+
 
 settings = Settings()

@@ -16,14 +16,11 @@ def handle_query(user_id: str, query: str):
 
     route = router.route(query)
 
-    # print("ROUTER DECISION:", route)
-
     if route == "tool":
         response = run_tool(query)
 
     else:
         docs = retriever.retrieve(query)
-
         context = build_context(user_id, query, docs)
 
         if route == "memory":
@@ -40,6 +37,7 @@ def handle_query(user_id: str, query: str):
             response = llm.generate(
                 question=query, memory=context["memory"], documents=context["documents"]
             )
+
     save_message(user_id, "assistant", response)
 
     return response

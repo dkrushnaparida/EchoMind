@@ -32,3 +32,11 @@ class OllamaClient:
         )
 
         return response.content
+
+    def stream(self, question: str, memory: str, documents: str):
+
+        for chunk in self.chain.stream(
+            {"question": question, "memory": memory, "documents": documents}
+        ):
+            if chunk.content:
+                yield chunk.content

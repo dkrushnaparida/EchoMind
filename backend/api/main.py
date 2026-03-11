@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-
-from backend.agents.agent import handle_query
-from backend.memory.postgres_memory import save_message
+from fastapi.responses import StreamingResponse
+from backend.agents.agent import handle_query_stream
 
 
 app = FastAPI()
@@ -13,16 +12,10 @@ class ChatRequest(BaseModel):
     message: str
 
 
-class ChatResponse(BaseModel):
-    response: str
-
-
-@app.post("/chat", response_model=ChatResponse)
+@app.post("/chat")
 def chat(req: ChatRequest):
+    def generate():
+        for token in handle_query_stream(req.user_id, req.message):
+            yield token
 
-    response = handle_query(user_id=req.user_id, query=req.message)
-
-    save_message(req.user_id, "user", req.message)
-    save_message(req.user_id, "assistant", response)
-
-    return ChatResponse(response=response)
+    return StreamingResponse(generate(), media_type="text/plain")

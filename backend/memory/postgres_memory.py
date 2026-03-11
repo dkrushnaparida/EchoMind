@@ -1,7 +1,7 @@
 import psycopg2
 from datetime import datetime
 from backend.core.config import settings
-
+from backend.memory.memory_vector_store import memory_vector_store
 
 DB_CONFIG = {
     "dbname": "echomind",
@@ -34,7 +34,10 @@ def save_message(user_id: str, role: str, content: str):
     """
     cur.execute(query, (user_id, role, content))
     conn.commit()
-    print("Saved message:", role)
+    # print("Saved message:", role)
+    memory_vector_store.add_texts(
+        texts=[content], metadatas=[{"user_id": user_id, "role": role}]
+    )
 
     cur.close()
     conn.close()
@@ -65,3 +68,14 @@ def get_recent_messages(user_id: str, limit: int = 5):
         messages.append({"role": role, "content": content})
 
     return messages[::-1]
+
+
+def search_memory(user_id: str, query: str, k: int = 3):
+    results = memory_vector_store.similarity_search(query, k=k)
+    memories = []
+
+    for r in results:
+        if r.metadata.get("user_id") == user_id:
+            memories.append(r.page_content)
+
+    return memories

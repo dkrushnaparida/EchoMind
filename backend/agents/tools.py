@@ -2,24 +2,13 @@ import webbrowser
 import os
 import platform
 import subprocess
+import datetime
 
 from langchain_core.tools import tool
-import datetime
 
 
 @tool
 def open_application(app_name: str) -> str:
-    """
-    Open a given application by name.
-
-    Args:
-        app_name (str): The name of the application to open.
-                       On Windows, this is passed directly to subprocess.Popen.
-
-    Returns:
-        str: A success message if the application opens,
-             or an error message if the operation fails.
-    """
     try:
         if platform.system() == "Windows":
             subprocess.Popen(app_name)
@@ -32,17 +21,6 @@ def open_application(app_name: str) -> str:
 
 @tool
 def system_info(_: str = "") -> str:
-    """
-    Retrieve basic system information.
-
-    Args:
-        _ (str, optional): Placeholder argument (not used).
-                           Defaults to an empty string.
-
-    Returns:
-        str: A formatted string containing system details such as
-             operating system, release version, machine type, and processor.
-    """
     return f"""
         System: {platform.system()}
         Release: {platform.release()}
@@ -53,17 +31,6 @@ def system_info(_: str = "") -> str:
 
 @tool
 def calculator(expression: str) -> str:
-    """
-    Evaluate a mathematical expression.
-
-    Args:
-        expression (str): A string containing a valid Python expression
-                          (e.g., "2+2", "3*5", "10/2").
-
-    Returns:
-        str: The result of the evaluated expression as a string,
-             or an error message if evaluation fails.
-    """
     try:
         result = eval(expression)
         return str(result)
@@ -73,32 +40,16 @@ def calculator(expression: str) -> str:
 
 
 @tool
-def get_time():
-    """Return the current system time."""
+def get_time(_: str = "") -> str:
     return datetime.datetime.now().strftime("%H:%M:%S")
 
 
 @tool
-def get_date():
-    """Return today's date."""
+def get_date(_: str = "") -> str:
     return datetime.date.today().isoformat()
 
 
 def run_tool(query: str):
-    """
-    Execute a predefined tool action based on a query string.
-
-    Args:
-        query (str): A user query describing the desired action.
-                     Supported queries include:
-                     - "open chrome": Opens Google Chrome in a browser.
-                     - "open youtube": Opens YouTube in a browser.
-                     - "open folder": Opens the current working directory.
-
-    Returns:
-        str: A message describing the action taken,
-             or "Tool not recognized." if the query does not match.
-    """
     q = query.lower()
 
     if "open chrome" in q:
@@ -116,8 +67,14 @@ def run_tool(query: str):
     if "time" in q:
         return get_time.invoke({})
 
-    elif "date" in q:
+    if "date" in q:
         return get_date.invoke({})
+
+    if any(x in q for x in ["*", "+", "-", "/"]):
+        return calculator.invoke({"expression": q})
+
+    if "system" in q:
+        return system_info.invoke({})
 
     return "Tool not recognized."
 
@@ -126,4 +83,6 @@ TOOLS = [
     open_application,
     system_info,
     calculator,
+    get_time,
+    get_date,
 ]

@@ -8,7 +8,7 @@ class QueryRouter:
         self.prompt = ChatPromptTemplate.from_template(
             """
             You are a query classifier.
-            Classify the user query into one of the categories:
+            Classify the user query into one category:
 
             memory  -> question about previous conversation
             rag     -> question about uploaded documents
@@ -27,5 +27,9 @@ class QueryRouter:
     def route(self, query: str):
         result = self.chain.invoke({"query": query})
         decision = result.content.strip().lower()
+        decision = decision.replace(".", "").replace("\n", "")
+
+        if decision not in ["memory", "rag", "tool"]:
+            decision = "rag"
 
         return decision

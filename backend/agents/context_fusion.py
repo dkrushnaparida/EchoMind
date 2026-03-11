@@ -1,24 +1,19 @@
-from backend.rag.retriever import RAGRetriever
-from backend.memory.postgres_memory import PostgresMemory
+from backend.memory.postgres_memory import get_recent_messages
+from backend.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
-class ContextFusion:
+def build_context(query, user_id, documents):
 
-    def __init__(self):
-        self.retriever = RAGRetriever()
-        self.memory = PostgresMemory()
+    memory = get_recent_messages(user_id)
 
-    def build_context(self, user_id: str, query: str):
-        memory_context = self.memory.get_recent_conversation(user_id)
-        rag_docs = self.retriever.retrieve(query)
-        rag_context = "\n\n".join([doc.page_content for doc in rag_docs])
+    memory_text = (
+        "\n".join([f"{m['role']}: {m['content']}" for m in memory]) if memory else ""
+    )
 
-        final_context = f"""
-        Conversation Memory:
-        {memory_context}
+    docs_text = "\n".join([doc.page_content for doc in documents]) if documents else ""
 
-        Knowledge Base:
-        {rag_context}
-        """
+    logger.info("Context built successfully")
 
-        return final_context
+    return {"memory": memory_text, "documents": docs_text}

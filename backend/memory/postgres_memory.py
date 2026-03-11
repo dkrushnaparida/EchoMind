@@ -5,7 +5,7 @@ from datetime import datetime
 DB_CONFIG = {
     "dbname": "echomind",
     "user": "postgres",
-    "password": "Password",
+    "password": "Dwiti@1995",
     "host": "localhost",
     "port": "5432",
 }
@@ -16,10 +16,6 @@ def get_connection():
 
 
 def save_message(user_id: str, role: str, content: str):
-    """
-    Save a message to PostgreSQL
-    """
-
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -36,10 +32,6 @@ def save_message(user_id: str, role: str, content: str):
 
 
 def get_recent_messages(user_id: str, limit: int = 5):
-    """
-    Retrieve recent conversation messages
-    """
-
     conn = get_connection()
     cursor = conn.cursor()
 
